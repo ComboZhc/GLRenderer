@@ -89,9 +89,6 @@ void reduce() {
     sort(v.begin(), v.end());
     vector<pair<GLuint, GLuint> >::iterator it = unique(v.begin(), v.end());
     v.resize(it - v.begin());
-    for (int i = 0; i < v.size(); ++i) {
-        cout << v[i].first << ' ' << v[i].second << endl;
-    }
     vector<GLfloat> new_vertex;
     vector<GLfloat> new_tex;
     vector<GLuint> new_ind;
@@ -101,9 +98,9 @@ void reduce() {
     }
     for (int i = 0; i < vertexInd.size(); ++i)
         new_ind.push_back(lower_bound(v.begin(), v.end(), make_pair(vertexInd[i], texInd[i])) - v.begin());
-    new_vertex.swap(vertex);
-    new_tex.swap(tex);
-    new_ind.swap(vertexInd);
+    vertex.swap(new_vertex);
+    tex.swap(new_tex);
+    vertexInd.swap(new_ind);
 }
 
 void save(const string& obj) {
@@ -190,20 +187,20 @@ int main(int argc, char *argv[])
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
-//    glEnable(GL_LIGHT0);
-//    glEnable(GL_NORMALIZE);
-//    glEnable(GL_COLOR_MATERIAL);
-//    glEnable(GL_LIGHTING);
-//
-//    glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
-//    glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
-//    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
-//    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-//
-//    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
-//    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
-//    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
-//    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_NORMALIZE);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHTING);
+
+    glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
 
     glEnable(GL_TEXTURE_2D);
 
@@ -221,7 +218,7 @@ int main(int argc, char *argv[])
                  GL_UNSIGNED_BYTE,
                  (GLvoid*)image);
     DEBUG()
-    //glutMainLoop();
+    glutMainLoop();
     cout << "Hello World!" << endl;
 
     return EXIT_SUCCESS;
