@@ -36,11 +36,11 @@ BYTE *loadBitmapFile(const char *filename,
     //read the bitmap info header
     fread(bitmapInfoHeader, sizeof(BITMAPINFOHEADER), 1, filePtr); // small edit. forgot to add the closing bracket at sizeof
 
-    //
-    if (bitmapInfoHeader->biCompression != BI_RGB) {
+    if (bitmapInfoHeader->biCompression != 0) {
         fclose(filePtr);
         return NULL;
     }
+    cout << "HAHA" << endl;
 
     imageSize = bitmapInfoHeader->biWidth * bitmapInfoHeader->biHeight * 3;
 
@@ -57,6 +57,7 @@ BYTE *loadBitmapFile(const char *filename,
         fclose(filePtr);
         return NULL;
     }
+    cout << "HAHA" << endl;
 
 
     //read in the bitmap image data
@@ -77,6 +78,7 @@ BYTE *loadBitmapFile(const char *filename,
         fclose(filePtr);
         return NULL;
     }
+    cout << "HAHA" << endl;
 
     //swap the r and b values to get RGB (bitmap is BGR)
     for (imageIdx = 0;
