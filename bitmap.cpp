@@ -62,7 +62,7 @@ BYTE *loadBitmapFile(const char *filename,
     //read in the bitmap image data
     fread(bitmapImage, imageSize, 1, filePtr);
 
-    //remove padding
+    //remove padding bits
     paddingBytes = bitmapInfoHeader->biWidth % 4 ? 4 - bitmapInfoHeader->biWidth % 4 : 0;
     if (paddingBytes > 0)
         for (imageIdx = 0; imageIdx < bitmapInfoHeader->biHeight; ++imageIdx) {
@@ -91,4 +91,20 @@ BYTE *loadBitmapFile(const char *filename,
     //close file and return bitmap iamge data
     fclose(filePtr);
     return bitmapImage;
+}
+
+int saveBitmapFile(const char* filename,
+                    BITMAPFILEHEADER* bitmapFileHeader,
+                    BITMAPINFOHEADER* bitmapInfoHeader,
+                    BYTE* image) {
+    //open filename in write binary mode
+    FILE* filePtr;
+    filePtr = fopen(filename,"wb");
+    if (filePtr == NULL)
+        return -1;
+    fwrite(bitmapFileHeader, sizeof(BITMAPFILEHEADER), 1, filePtr);
+    fwrite(bitmapInfoHeader, sizeof(BITMAPINFOHEADER), 1, filePtr);
+    fwrite(image, sizeof(bitmapInfoHeader->biWidth * bitmapInfoHeader->biHeight * 3), 1, filePtr);
+    fclose(filePtr);
+    return 0;
 }

@@ -1,7 +1,9 @@
 # depslib dependency file v1.0
-1392360365 source:t:\glrenderer\main.cpp
+1392623768 source:t:\glrenderer\main.cpp
 	<windows.h>
+	<GL/glew.h>
 	<GL/glut.h>
+	<GL/glext.h>
 	<iostream>
 	<fstream>
 	<sstream>
@@ -226,13 +228,15 @@
 	<stddef.h>
 	<GL/gl.h>
 
-1392359565 source:t:\glrenderer\bitmap.cpp
+1392623660 source:t:\glrenderer\bitmap.cpp
 	"bitmap.hpp"
 	<string.h>
-
-1392357770 t:\glrenderer\bitmap.hpp
 	<stdio.h>
 	<stdlib.h>
+	<iostream>
+
+1392608993 t:\glrenderer\bitmap.hpp
+	<windows.h>
 
 1341010376 c:\program files\codeblocks\mingw\include\stdio.h
 	<_mingw.h>
@@ -243,4 +247,23 @@
 1341010380 c:\program files\codeblocks\mingw\include\sys\types.h
 	<_mingw.h>
 	<stddef.h>
+
+1374455600 c:\program files\codeblocks\mingw\include\gl\glew.h
+	<stddef.h>
+	<inttypes.h>
+	<stdint.h>
+	<inttypes.h>
+	<OpenGL/glu.h>
+	<GL/glu.h>
+
+1341010372 c:\program files\codeblocks\mingw\include\inttypes.h
+	<_mingw.h>
+	<stdint.h>
+	<stddef.h>
+
+1341010376 c:\program files\codeblocks\mingw\include\stdint.h
+	<stddef.h>
+
+1301111164 c:\program files\codeblocks\mingw\include\gl\glext.h
+	<windows.h>
 

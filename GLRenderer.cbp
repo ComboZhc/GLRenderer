@@ -20,7 +20,7 @@
 				<Option output="bin/Release/GLRenderer" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="C:/Program Files/CodeBlocks/MinGW/bin" />
 				<Option object_output="obj/Release/" />
-				<Option type="0" />
+				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
@@ -36,6 +36,8 @@
 			<Add directory="C:/Program Files/CodeBlocks/MinGW/include" />
 		</Compiler>
 		<Linker>
+			<Add library="glew32s" />
+			<Add library="glew32" />
 			<Add library="glut32" />
 			<Add library="opengl32" />
 			<Add library="glu32" />

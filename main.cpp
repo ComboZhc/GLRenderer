@@ -12,8 +12,12 @@
  * using the + and - keys.
  */
 
+#define GLEW_STATIC
+
 #include <windows.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
+#include <GL/glext.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -29,10 +33,17 @@ vector<GLfloat> vertex;
 vector<GLfloat> tex;
 vector<GLuint> vertexInd;
 vector<GLuint> texInd;
+
 GLuint texId;
-BYTE* image;
+GLuint fboId;
+GLuint rbId;
+
 BITMAPFILEHEADER imgHeader;
 BITMAPINFOHEADER imgInfo;
+
+BYTE* image;
+BYTE* out_image;
+
 GLenum err;
 
 #define DEBUG() \
@@ -42,9 +53,10 @@ GLenum err;
         err = 0;\
     }
 
+#define SCREEN_WIDTH  640
+#define SCREEN_HEIGHT 480
 
 /* Loader */
-
 void load(const string& obj) {
     ifstream in(obj.c_str());
     cout << obj.c_str() << endl;
@@ -117,7 +129,6 @@ void save(const string& obj) {
 }
 
 /* GLUT callback Handlers */
-
 static void resize(int width, int height)
 {
     const float ar = (float) width / (float) height;
@@ -130,8 +141,7 @@ static void resize(int width, int height)
     glLoadIdentity();
 }
 
-static void display(void)
-{
+static void draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
@@ -142,6 +152,11 @@ static void display(void)
     glDrawElements(GL_TRIANGLES, vertexInd.size(), GL_UNSIGNED_INT, vertexInd.data());
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+}
+
+static void display()
+{
+    draw();
     glutSwapBuffers();
 }
 
@@ -164,14 +179,6 @@ const GLfloat high_shininess[] = { 100.0f };
 
 int main(int argc, char *argv[])
 {
-    load("T:\\GLRenderer\\fengkan_10000.obj");
-    reduce();
-    save("T:\\GLRenderer\\fengkan_20000.obj");
-    image = loadBitmapFile("T:\\GLRenderer\\fengkan_10000.bmp", &imgHeader, &imgInfo);
-
-    if (image)
-        cout << "GOT!" << endl;
-
     glutInit(&argc, argv);
     glutInitWindowSize(640,480);
     glutInitWindowPosition(10,10);
@@ -180,6 +187,22 @@ int main(int argc, char *argv[])
     glutReshapeFunc(resize);
     glutDisplayFunc(display);
     glutIdleFunc(idle);
+    load("T:\\GLRenderer\\fengkan_10000.obj");
+    reduce();
+    save("T:\\GLRenderer\\fengkan_20000.obj");
+    image = loadBitmapFile("T:\\GLRenderer\\fengkan_10000.bmp", &imgHeader, &imgInfo);
+
+    if (image)
+        cout << "GOT!" << endl;
+
+    DEBUG()
+    glGenFramebuffers(1, &fboId);
+    DEBUG()
+    glGenRenderbuffers(1, &rbId);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbId);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB, SCREEN_WIDTH, SCREEN_HEIGHT);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
+    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbId);
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glEnable(GL_CULL_FACE);
@@ -217,9 +240,23 @@ int main(int argc, char *argv[])
                  GL_RGB,
                  GL_UNSIGNED_BYTE,
                  (GLvoid*)image);
-    DEBUG()
-    glutMainLoop();
-    cout << "Hello World!" << endl;
 
+    resize(SCREEN_WIDTH, SCREEN_HEIGHT);
+    draw();
+
+    out_image = (unsigned char*) malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 3);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glReadPixels(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_BGR, GL_UNSIGNED_BYTE, out_image);
+
+    imgHeader.bfSize = SCREEN_WIDTH * SCREEN_HEIGHT * 3;
+    imgInfo.biWidth = SCREEN_WIDTH;
+    imgInfo.biHeight = SCREEN_HEIGHT;
+    //glutMainLoop();
+    saveBitmapFile("T:\\GLRenderer\\fengkan_snapshot.bmp", &imgHeader, &imgInfo, out_image);
+    DEBUG()
+    glDeleteFramebuffers(1, &fboId);
+    glDeleteRenderbuffers(1, &rbId);
+    free(out_image);
+    free(image);
     return EXIT_SUCCESS;
 }
