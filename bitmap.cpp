@@ -40,7 +40,6 @@ BYTE *loadBitmapFile(const char *filename,
         fclose(filePtr);
         return NULL;
     }
-    cout << "HAHA" << endl;
 
     imageSize = bitmapInfoHeader->biWidth * bitmapInfoHeader->biHeight * 3;
 
@@ -57,7 +56,6 @@ BYTE *loadBitmapFile(const char *filename,
         fclose(filePtr);
         return NULL;
     }
-    cout << "HAHA" << endl;
 
 
     //read in the bitmap image data
@@ -78,7 +76,6 @@ BYTE *loadBitmapFile(const char *filename,
         fclose(filePtr);
         return NULL;
     }
-    cout << "HAHA" << endl;
 
     //swap the r and b values to get RGB (bitmap is BGR)
     for (imageIdx = 0;
@@ -106,7 +103,8 @@ int saveBitmapFile(const char* filename,
         return -1;
     fwrite(bitmapFileHeader, sizeof(BITMAPFILEHEADER), 1, filePtr);
     fwrite(bitmapInfoHeader, sizeof(BITMAPINFOHEADER), 1, filePtr);
-    fwrite(image, sizeof(bitmapInfoHeader->biWidth * bitmapInfoHeader->biHeight * 3), 1, filePtr);
+    fseek(filePtr, bitmapFileHeader->bfOffBits, SEEK_SET);
+    fwrite(image, bitmapInfoHeader->biWidth * bitmapInfoHeader->biHeight * 3, 1, filePtr);
     fclose(filePtr);
     return 0;
 }

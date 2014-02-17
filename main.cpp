@@ -12,6 +12,7 @@
  * using the + and - keys.
  */
 
+#define GL_GLEXT_PROTOTYPES
 
 #include "bitmap.hpp"
 #include <GL/glut.h>
@@ -140,6 +141,7 @@ static void resize(int width, int height)
 
 static void draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(1.0, 1.0, 1.0, 1.0);
     glLoadIdentity();
 
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -154,12 +156,17 @@ static void draw() {
 static void display()
 {
     draw();
-    glutSwapBuffers();
-}
 
-static void idle(void)
-{
-    glutPostRedisplay();
+    out_image = (unsigned char*) malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 3);
+    // glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glReadPixels(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_BGR, GL_UNSIGNED_BYTE, out_image);
+
+    imgHeader.bfSize = SCREEN_WIDTH * SCREEN_HEIGHT * 3 + imgHeader.bfOffBits;
+    imgInfo.biWidth = SCREEN_WIDTH;
+    imgInfo.biHeight = SCREEN_HEIGHT;
+    saveBitmapFile("fengkan_snapshot.bmp", &imgHeader, &imgInfo, out_image);
+    free(out_image);
+    free(image);
 }
 
 const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -179,28 +186,25 @@ int main(int argc, char *argv[])
     glutInit(&argc, argv);
     glutInitWindowSize(640,480);
     glutInitWindowPosition(10,10);
-    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH);
     glutCreateWindow("GLUT Shapes");
     glutReshapeFunc(resize);
     glutDisplayFunc(display);
-    glutIdleFunc(idle);
     load("fengkan_10000.obj");
     reduce();
     save("fengkan_20000.obj");
     image = loadBitmapFile("fengkan_10000.bmp", &imgHeader, &imgInfo);
-
     if (!image)
          cout << "image read failed" << endl;
 
-    // DEBUG()
     // glGenFramebuffers(1, &fboId);
-    // DEBUG()
     // glGenRenderbuffers(1, &rbId);
     // glBindRenderbuffer(GL_RENDERBUFFER, rbId);
     // glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB, SCREEN_WIDTH, SCREEN_HEIGHT);
     // glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
     // glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbId);
-
+    // glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
+    
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -228,8 +232,6 @@ int main(int argc, char *argv[])
     glBindTexture(GL_TEXTURE_2D, texId);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    cout << imgInfo.biWidth << endl;
-    cout << imgInfo.biHeight << endl;
     glTexImage2D(GL_TEXTURE_2D,
                  0,
                  GL_RGB,
@@ -244,20 +246,10 @@ int main(int argc, char *argv[])
     // resize(SCREEN_WIDTH, SCREEN_HEIGHT);
     // draw();
 
-    // out_image = (unsigned char*) malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 3);
-    // glReadBuffer(GL_COLOR_ATTACHMENT0);
-    // glReadPixels(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_BGR, GL_UNSIGNED_BYTE, out_image);
-
-    // imgHeader.bfSize = SCREEN_WIDTH * SCREEN_HEIGHT * 3;
-    // imgInfo.biWidth = SCREEN_WIDTH;
-    // imgInfo.biHeight = SCREEN_HEIGHT;
-    // //glutMainLoop();
-    // saveBitmapFile("T:\\GLRenderer\\fengkan_snapshot.bmp", &imgHeader, &imgInfo, out_image);
-    // DEBUG()
+    DEBUG()
     // glDeleteFramebuffers(1, &fboId);
     // glDeleteRenderbuffers(1, &rbId);
-    // free(out_image);
-    // free(image);
     glutMainLoop();
+
     return EXIT_SUCCESS;
 }
