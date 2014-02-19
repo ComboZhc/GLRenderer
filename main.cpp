@@ -39,11 +39,10 @@ GLuint rbId;
 BITMAPFILEHEADER imgHeader;
 BITMAPINFOHEADER imgInfo;
 
-BYTE* image;
+BYTE* in_image;
 BYTE* out_image;
 
 GLenum err;
-
 #define DEBUG() \
     err = glGetError();\
     if (err) {\
@@ -51,8 +50,32 @@ GLenum err;
         err = 0;\
     }
 
-#define SCREEN_WIDTH  640
-#define SCREEN_HEIGHT 480
+GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
+GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+
+GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
+GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
+GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
+GLfloat high_shininess[] = { 100.0f };
+int screen_width = 640;
+int screen_height = 640;
+char* src_file;
+char* out_bmp;
+char* in_bmp;
+GLfloat eyeX = 0;
+GLfloat eyeY = 4;
+GLfloat eyeZ = -4;
+GLfloat centerX = 0;
+GLfloat centerY = 0;
+GLfloat centerZ = 0;
+GLfloat upX = -1;
+GLfloat upY = 0;
+GLfloat upZ = 0;
+GLfloat colorR = 0;
+GLfloat colorG = 0;
+GLfloat colorB = 0;
 
 /* Loader */
 void load(const string& obj) {
@@ -134,7 +157,7 @@ static void resize(int width, int height)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(45, ar, 0.1f, 100.0f);
-    gluLookAt(0, 5, -5, 0, 0, 0, 0, 0, -1);
+    gluLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }
@@ -153,79 +176,142 @@ static void draw() {
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
+static void print() {
+    out_image = (unsigned char*) malloc(screen_width * screen_height * 3);
+    glReadPixels(0, 0, screen_width, screen_height, GL_BGR, GL_UNSIGNED_BYTE, out_image);
+    imgHeader.bfSize = screen_width * screen_height * 3 + imgHeader.bfOffBits;
+    imgInfo.biWidth = screen_width;
+    imgInfo.biHeight = screen_height;
+    saveBitmapFile(out_bmp, &imgHeader, &imgInfo, out_image);
+    free(out_image);
+    free(in_image);
+}
+
 static void display()
 {
     draw();
-
-    out_image = (unsigned char*) malloc(SCREEN_WIDTH * SCREEN_HEIGHT * 3);
-    // glReadBuffer(GL_COLOR_ATTACHMENT0);
-    glReadPixels(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_BGR, GL_UNSIGNED_BYTE, out_image);
-
-    imgHeader.bfSize = SCREEN_WIDTH * SCREEN_HEIGHT * 3 + imgHeader.bfOffBits;
-    imgInfo.biWidth = SCREEN_WIDTH;
-    imgInfo.biHeight = SCREEN_HEIGHT;
-    saveBitmapFile("fengkan_snapshot.bmp", &imgHeader, &imgInfo, out_image);
-    free(out_image);
-    free(image);
+    print();
+    exit(0);
 }
 
-const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
-const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+void shift(int* argc, char*** argv) {
+    --*argc;
+    ++*argv;
+}
 
-const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
-const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
-const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat high_shininess[] = { 100.0f };
+void usage() {
+    printf("GLRenderer [-w width] [-h height] [-s src_obj] [-o out_bmp] [-i in_bmp] [-l eyeX eyeY eyeZ centerX centerY centerZ upX upY upZ] [-c r g b] [-p x y z]\n");
+    printf("-w, --width: width for screen, must be INT\n");
+    printf("-h, --height: height for screen, must be INT\n");
+    printf("-s, --src: source .obj file path\n");
+    printf("-o, --out: out bmp file path\n");
+    printf("-i, --in: in .bmp file path\n");
+    printf("-b, --bmp: texture bmp file path\n");
+    printf("-l, --look: see gluLookAt, 9 FLOAT NUMBERS\n");
+    printf("-p, --position: see glLight with GL_POSITION, 3 FLOAT NUMBERS\n");
+    exit(-1);
+}
+
+void parse_args(int argc, char** argv) {
+    if (argc == 0)
+        usage();
+    while (argc > 0) {
+        if (!strcmp(*argv, "-w") || !strcmp(*argv, "--width")) {
+            shift(&argc, &argv);
+            screen_width = atoi(*argv);
+        } else if (!strcmp(*argv, "-h") || !strcmp(*argv, "--height")) {
+            shift(&argc, &argv);
+            screen_height = atoi(*argv);
+        } else if (!strcmp(*argv, "-s") || !strcmp(*argv, "--src")) {
+            shift(&argc, &argv);
+            src_file = *argv;
+        } else if (!strcmp(*argv, "-o") || !strcmp(*argv, "--out")) {
+            shift(&argc, &argv);
+            out_bmp = *argv;
+        } else if (!strcmp(*argv, "-i") || !strcmp(*argv, "--in")) {
+            shift(&argc, &argv);
+            in_bmp = *argv;
+        } else if (!strcmp(*argv, "-l") || !strcmp(*argv, "--look")) {
+            shift(&argc, &argv);
+            eyeX = atof(*argv);
+            shift(&argc, &argv);
+            eyeY = atof(*argv);
+            shift(&argc, &argv);
+            eyeZ = atof(*argv);
+            shift(&argc, &argv);
+            centerX = atof(*argv);
+            shift(&argc, &argv);
+            centerY = atof(*argv);
+            shift(&argc, &argv);
+            centerZ = atof(*argv);
+            shift(&argc, &argv);
+            upX = atof(*argv);
+            shift(&argc, &argv);
+            upY = atof(*argv);
+            shift(&argc, &argv);
+            upZ = atof(*argv);
+        } else if (!strcmp(*argv, "-c") || !strcmp(*argv, "--color")) {
+            shift(&argc, &argv);
+            colorR = atof(*argv);
+            shift(&argc, &argv);
+            colorG = atof(*argv);
+            shift(&argc, &argv);
+            colorB = atof(*argv);
+        } else if (!strcmp(*argv, "-p") || !strcmp(*argv, "--position")) {
+            shift(&argc, &argv);
+            light_position[0] = atof(*argv);
+            shift(&argc, &argv);
+            light_position[1] = atof(*argv);
+            shift(&argc, &argv);
+            light_position[2] = atof(*argv);
+        }
+        shift(&argc, &argv);
+    }
+}
 
 /* Program entry point */
 
-int main(int argc, char *argv[])
+int main(int argc, char** argv)
 {
-    glutInit(&argc, argv);
-    glutInitWindowSize(640,480);
-    glutInitWindowPosition(10,10);
+    parse_args(argc - 1, &argv[1]);
+    printf("parse done\n");
+    int fakeArgc = 1;
+    char fakeArgp[] = "GLRenderer";
+    char *fakeArgv[] = { fakeArgp, NULL };
+    glutInit(&fakeArgc, fakeArgv);
+    printf("glut init\n");
+    glutInitWindowSize(screen_width, screen_height);
+    glutInitWindowPosition(0,0);
     glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH);
-    glutCreateWindow("GLUT Shapes");
+    glutCreateWindow("GLRenderer");
+    printf("glut created\n");
     glutReshapeFunc(resize);
     glutDisplayFunc(display);
-    load("fengkan_10000.obj");
+    load(src_file);
     reduce();
-    save("fengkan_20000.obj");
-    image = loadBitmapFile("fengkan_10000.bmp", &imgHeader, &imgInfo);
-    if (!image)
-         cout << "image read failed" << endl;
-
-    // glGenFramebuffers(1, &fboId);
-    // glGenRenderbuffers(1, &rbId);
-    // glBindRenderbuffer(GL_RENDERBUFFER, rbId);
-    // glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB, SCREEN_WIDTH, SCREEN_HEIGHT);
-    // glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
-    // glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbId);
-    // glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboId);
-    
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    in_image = loadBitmapFile(in_bmp, &imgHeader, &imgInfo);
+    if (!in_image) {
+        printf("image read failed\n");
+        exit(-2);
+    }
+    printf("read completed\n");
+    glClearColor(colorR, colorG, colorB, 0.0f);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-
     glEnable(GL_LIGHT0);
     glEnable(GL_NORMALIZE);
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHTING);
-
     glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-
     glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
     glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
     glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
     glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
-
     glEnable(GL_TEXTURE_2D);
 
     glGenTextures(1, &texId);
@@ -240,15 +326,8 @@ int main(int argc, char *argv[])
                  0,
                  GL_RGB,
                  GL_UNSIGNED_BYTE,
-                 (GLvoid*)image);
-    DEBUG()
-
-    // resize(SCREEN_WIDTH, SCREEN_HEIGHT);
-    // draw();
-
-    DEBUG()
-    // glDeleteFramebuffers(1, &fboId);
-    // glDeleteRenderbuffers(1, &rbId);
+                 (GLvoid*)in_image);
+    printf("loop\n");
     glutMainLoop();
 
     return EXIT_SUCCESS;
