@@ -1,0 +1,13 @@
+CC = g++
+CCFLAGS = -std=c++11 -I"C:\Program Files\CodeBlocks\MinGW\include" -lglut32 -lopengl32 -lglu32 -lwinmm -lgdi32
+INCLUDE = -I"C:\Program Files\CodeBlocks\MinGW\include"
+OBJECTS = bitmap.o main.o
+TARGET = GLRenderer
+GLRenderer: $(OBJECTS)
+	$(CC) -o $(TARGET) $(OBJECTS) $(CCFLAGS)
+main.o : main.cpp bitmap.hpp
+	$(CC) -c $< $(INCLUDE)
+bitmap.o : bitmap.cpp bitmap.hpp
+	$(CC) -c $< $(INCLUDE)
+clean : 
+	rm $(TARGET) $(OBJECTS)
