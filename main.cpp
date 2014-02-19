@@ -195,17 +195,19 @@ static void display()
 }
 
 void shift(int* argc, char*** argv) {
+    if (*argc == 0)
+        exit(-1);
     --*argc;
     ++*argv;
 }
 
 void usage() {
-    printf("GLRenderer [-w width] [-h height] [-s src_obj] [-o out_bmp] [-i in_bmp] [-l eyeX eyeY eyeZ centerX centerY centerZ upX upY upZ] [-c r g b] [-p x y z]\n");
-    printf("-w, --width: width for screen, must be INT\n");
-    printf("-h, --height: height for screen, must be INT\n");
+    printf("GLRenderer -s src_obj -o out_bmp -i in_bmp [-w width] [-h height] [-l eyeX eyeY eyeZ centerX centerY centerZ upX upY upZ] [-c r g b] [-p x y z]\n");
     printf("-s, --src: source .obj file path\n");
     printf("-o, --out: out bmp file path\n");
-    printf("-i, --in: in .bmp file path\n");
+    printf("-i, --in: in bmp file path\n");
+    printf("-w, --width: width for screen, must be INT\n");
+    printf("-h, --height: height for screen, must be INT\n");
     printf("-b, --bmp: texture bmp file path\n");
     printf("-l, --look: see gluLookAt, 9 FLOAT NUMBERS\n");
     printf("-p, --position: see glLight with GL_POSITION, 3 FLOAT NUMBERS\n");
@@ -264,7 +266,8 @@ void parse_args(int argc, char** argv) {
             light_position[1] = atof(*argv);
             shift(&argc, &argv);
             light_position[2] = atof(*argv);
-        }
+        } else
+            usage();
         shift(&argc, &argv);
     }
 }

@@ -36,8 +36,6 @@
 			<Add directory="C:/Program Files/CodeBlocks/MinGW/include" />
 		</Compiler>
 		<Linker>
-			<Add library="glew32s" />
-			<Add library="glew32" />
 			<Add library="glut32" />
 			<Add library="opengl32" />
 			<Add library="glu32" />
