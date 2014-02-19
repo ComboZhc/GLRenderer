@@ -1,8 +1,10 @@
 #ifndef BITMAP_H
 #define BITMAP_H
 
+#ifdef __WIN32
+#include <windows.h>
+#else
 #include <stdint.h>
-
 typedef uint8_t BYTE;
 typedef uint16_t WORD;
 typedef uint32_t DWORD;
@@ -29,6 +31,7 @@ typedef struct tagBITMAPINFOHEADER {
   DWORD biClrUsed;
   DWORD biClrImportant;
 } __attribute__((packed)) BITMAPINFOHEADER;
+#endif
 
 BYTE* loadBitmapFile(const char* filename,
                      BITMAPFILEHEADER* bitmapFileHeader,
