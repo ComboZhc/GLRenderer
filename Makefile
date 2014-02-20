@@ -1,12 +1,12 @@
 CC = g++
-CCFLAGS = -std=c++11 -lglut -lGLU
+CCFLAGS = -std=c++0x -lglut -lGLU
 OBJECTS = bitmap.o main.o
 TARGET = GLRenderer
 GLRenderer: $(OBJECTS)
 	$(CC) -o $(TARGET) $(OBJECTS) $(CCFLAGS)
 main.o : main.cpp bitmap.hpp
-	$(CC) -c $<
+	$(CC) -c $< $(CCFLAGS)
 bitmap.o : bitmap.cpp bitmap.hpp
-	$(CC) -c $<
+	$(CC) -c $< $(CCFLAGS)
 clean : 
 	rm $(TARGET) $(OBJECTS)
