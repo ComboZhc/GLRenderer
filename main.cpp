@@ -53,14 +53,9 @@ GLenum err;
     }
 
 GLfloat light_ambient[]  = { 0.2f, 0.2f, 0.2f, 1.0f };
-GLfloat light_diffuse[]  = { 0.8f, 0.8f, 0.8f, 1.0f };
-GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-GLfloat light_position[] = { 0.0f, 0.0f, 4.0f, 1.0f };
+GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+GLfloat light_position[] = { 0.0f, 3.0f, 3.0f, 1.0f };
 
-GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
-GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
-GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
-GLfloat high_shininess[] = { 100.0f };
 int screen_width = 640;
 int screen_height = 640;
 char* src_file;
@@ -78,6 +73,8 @@ GLfloat upZ = 0;
 GLfloat colorR = 0;
 GLfloat colorG = 0;
 GLfloat colorB = 0;
+int brightness = 0;
+int contrast = 0;
 
 /* Loader */
 void load(const string& obj) {
@@ -139,9 +136,9 @@ void reduce() {
 
     color.clear();
     for (int i = 0; i < vertexInd.size(); ++i) {
-        color.push_back(1.0);
-        color.push_back(1.0);
-        color.push_back(1.0);
+        color.push_back(0.0);
+        color.push_back(0.0);
+        color.push_back(0.0);
         color.push_back(1.0);
     }
 }
@@ -190,9 +187,28 @@ static void draw() {
     DEBUG()
 }
 
+static void brightness_and_contrast() {
+    float threshold = 127;
+    contrast = contrast < -255 ? -255 : contrast > 254 ? 254 : contrast;
+    printf("%d %d\n", brightness, contrast);
+    BYTE values[256];
+    for (int i = 0; i < 256; ++i) {
+        int v;
+        if (contrast >= 0)
+            v = (i + brightness) + (i + brightness - threshold) * (1 / (1 - contrast / 255.0f) - 1) + 0.5f;
+        else
+            v = i + (i - threshold) * contrast / 255.0f + brightness + 0.5f;
+        values[i] = v <= 0 ? 0 : v >= 255 ? 255 : v;
+        printf("%d %d\n", i, values[i]);
+    }
+    for (int i = 0; i < screen_width * screen_height * 3; ++i)
+        out_image[i] = values[out_image[i]];
+}
+
 static void print() {
     out_image = (unsigned char*) malloc(screen_width * screen_height * 3);
     glReadPixels(0, 0, screen_width, screen_height, GL_BGR, GL_UNSIGNED_BYTE, out_image);
+    brightness_and_contrast();
     imgHeader.bfSize = screen_width * screen_height * 3 + imgHeader.bfOffBits;
     imgInfo.biWidth = screen_width;
     imgInfo.biHeight = screen_height;
@@ -216,7 +232,7 @@ void shift(int* argc, char*** argv) {
 }
 
 void usage() {
-    printf("GLRenderer -s src_obj -o out_bmp -i in_bmp [-w width] [-h height] [-l eyeX eyeY eyeZ centerX centerY centerZ upX upY upZ] [-c r g b] [-p x y z]\n");
+    printf("GLRenderer -s src_obj -o out_bmp -i in_bmp [-w width] [-h height] [-l eyeX eyeY eyeZ centerX centerY centerZ upX upY upZ] [-c r g b] [-p x y z] [-t <contrast>] [-r <brightness>]\n");
     printf("-s, --src: source .obj file path\n");
     printf("-o, --out: out bmp file path\n");
     printf("-i, --in: in bmp file path\n");
@@ -225,6 +241,9 @@ void usage() {
     printf("-b, --bmp: texture bmp file path\n");
     printf("-l, --look: see gluLookAt, 9 FLOAT NUMBERS\n");
     printf("-p, --position: see glLight with GL_POSITION, 3 FLOAT NUMBERS\n");
+    printf("-c, --color: background color\n");
+    printf("-t, --contrast: contrast of the output\n");
+    printf("-r, --brightness: brightness of the output\n");
     exit(-1);
 }
 
@@ -280,6 +299,12 @@ void parse_args(int argc, char** argv) {
             light_position[1] = atof(*argv);
             shift(&argc, &argv);
             light_position[2] = atof(*argv);
+        } else if (!strcmp(*argv, "-r") || !strcmp(*argv, "--brightness")) {
+            shift(&argc, &argv);
+            brightness = atoi(*argv);
+        } else if (!strcmp(*argv, "-t") || !strcmp(*argv, "--contrast")) {
+            shift(&argc, &argv);
+            contrast = atoi(*argv);
         } else
             usage();
         shift(&argc, &argv);
@@ -321,12 +346,7 @@ int main(int argc, char** argv)
     glEnable(GL_LIGHT0);
     glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,   mat_ambient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,   mat_diffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  mat_specular);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, high_shininess);
     glEnable(GL_TEXTURE_2D);
 
     glGenTextures(1, &texId);
