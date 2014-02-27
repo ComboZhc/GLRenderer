@@ -242,8 +242,8 @@ void usage() {
     printf("-l, --look: see gluLookAt, 9 FLOAT NUMBERS\n");
     printf("-p, --position: see glLight with GL_POSITION, 3 FLOAT NUMBERS\n");
     printf("-c, --color: background color\n");
-    printf("-t, --contrast: contrast of the output\n");
-    printf("-r, --brightness: brightness of the output\n");
+    printf("-t, --contrast: contrast of the output, INT in [-255, 254]\n");
+    printf("-r, --brightness: brightness of the output, INT in [-255, 254]\n");
     exit(-1);
 }
 
