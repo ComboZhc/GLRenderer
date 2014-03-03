@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <cfloat>
 #include <utility>
 #include <algorithm>
 
@@ -33,7 +34,6 @@ vector<GLfloat> tex;
 vector<GLuint> vertexInd;
 vector<GLuint> texInd;
 vector<GLfloat> color;
-
 GLuint texId;
 GLuint fboId;
 GLuint rbId;
@@ -54,7 +54,7 @@ GLenum err;
 
 GLfloat light_ambient[]  = { 0.2f, 0.2f, 0.2f, 1.0f };
 GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-GLfloat light_position[] = { 0.0f, 3.0f, 3.0f, 1.0f };
+GLfloat light_position[] = { 0.0f, 2.0f, 2.0f, 1.0f };
 
 int screen_width = 640;
 int screen_height = 640;
@@ -75,6 +75,9 @@ GLfloat colorG = 0;
 GLfloat colorB = 0;
 int brightness = 0;
 int contrast = 0;
+float fovy = 45;
+float tan_fovy_2 = tan(3.1415926 / 8);
+bool auto_eye = false;
 
 /* Loader */
 void load(const string& obj) {
@@ -115,6 +118,29 @@ void load(const string& obj) {
 }
 
 void reduce() {
+    if (auto_eye) {
+        float maxL = 0;
+        float eyeL = sqrt(eyeX * eyeX + eyeY * eyeY + eyeZ * eyeZ);
+        for (int i = 0; i < vertex.size() / 3; ++i) {
+            float aX = vertex[3 * i];
+            float aY = vertex[3 * i + 1];
+            float aZ = vertex[3 * i + 2];
+            float aL = sqrt(aX * aX + aY * aY + aZ * aZ);
+            float dot = (aX * eyeX + aY * eyeY + aZ * eyeZ);
+            float cosA =  dot / aL / eyeL;
+            float sinA = sqrt(1 - cosA * cosA);
+            float h = sinA * aL;
+            float t = h / tan_fovy_2;
+            float l = t + dot / eyeL;
+            if (l > maxL)
+                maxL = l;
+        }
+        cout << maxL << endl;
+        eyeX *= maxL / eyeL;
+        eyeY *= maxL / eyeL;
+        eyeZ *= maxL / eyeL;
+    }
+
     vector<pair<GLuint, GLuint> > v;
     for (int i = 0; i < vertexInd.size(); ++i)
         v.push_back(make_pair(vertexInd[i], texInd[i]));
@@ -163,7 +189,7 @@ static void resize(int width, int height)
     glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45, ar, 0.1f, 100.0f);
+    gluPerspective(fovy, ar, 0.1f, 100.0f);
     gluLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -190,7 +216,6 @@ static void draw() {
 static void brightness_and_contrast() {
     float threshold = 127;
     contrast = contrast < -255 ? -255 : contrast > 254 ? 254 : contrast;
-    printf("%d %d\n", brightness, contrast);
     BYTE values[256];
     for (int i = 0; i < 256; ++i) {
         int v;
@@ -199,7 +224,6 @@ static void brightness_and_contrast() {
         else
             v = i + (i - threshold) * contrast / 255.0f + brightness + 0.5f;
         values[i] = v <= 0 ? 0 : v >= 255 ? 255 : v;
-        printf("%d %d\n", i, values[i]);
     }
     for (int i = 0; i < screen_width * screen_height * 3; ++i)
         out_image[i] = values[out_image[i]];
@@ -244,6 +268,7 @@ void usage() {
     printf("-c, --color: background color\n");
     printf("-t, --contrast: contrast of the output, INT in [-255, 254]\n");
     printf("-r, --brightness: brightness of the output, INT in [-255, 254]\n");
+    printf("-a, --auto: auto up position\n");
     exit(-1);
 }
 
@@ -305,6 +330,8 @@ void parse_args(int argc, char** argv) {
         } else if (!strcmp(*argv, "-t") || !strcmp(*argv, "--contrast")) {
             shift(&argc, &argv);
             contrast = atoi(*argv);
+        } else if (!strcmp(*argv, "-a") || !strcmp(*argv, "--auto")) {
+            auto_eye = true;
         } else
             usage();
         shift(&argc, &argv);
