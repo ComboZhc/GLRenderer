@@ -52,9 +52,11 @@ GLenum err;
         err = 0;\
     }
 
-GLfloat light_ambient[]  = { 0.2f, 0.2f, 0.2f, 1.0f };
+GLfloat light_ambient[]  = { 0.8f, 0.8f, 0.8f, 1.0f };
 GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 GLfloat light_position[] = { 0.0f, 2.0f, 2.0f, 1.0f };
+GLfloat light_shininess[] = { 1.0f };
 
 int screen_width = 640;
 int screen_height = 640;
@@ -373,6 +375,8 @@ int main(int argc, char** argv)
     glEnable(GL_LIGHT0);
     glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+    glLightfv(GL_LIGHT0, GL_SHININESS, light_shininess);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glEnable(GL_TEXTURE_2D);
 
